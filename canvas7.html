@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <script>
+        var w = window.innerWidth;
+        var h = window.innerHeight;
+        
+        var canvas = document.createElement('canvas');
+        document.body.appendChild(canvas);
+
+        canvas.width = w;
+        canvas.height = h;
+
+        var ctx = canvas.getContext('2d');
+
+        var point = function(x,y,z,rgb) {this.x=x;this.y=y;this.z=z;this.rgb=rgb;};
+        var p1 = new point(w/2, h/2,100,"white");
+
+        var mouse = new point(0,0,0);
+
+        document.addEventListener('mousemove', (e) => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+        })
+
+        var circle = function(x,y,z,r) {this.x=x;this.y=y;this.z=z;this.r=r;};
+
+        var turn = false;
+        
+        var c1 = new circle(w/2, h/2, 0, 10);
+
+        var c2 = new circle(w/2-200, h/2, 0, 10);
+
+        var camera = new point(w/2,h/2, 100);
+
+        let angles = [];
+        
+        for(let i =0; i<360; i++) {
+            for(let j = -2; j<2; j+=1) {
+                angles.push(new point(20 *Math.cos(Math.PI / 180 * i) + j,20 * Math.sin(Math.PI / 180 * i) + j,i+j,`rgb(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255})`));
+            }
+        }
+        
+        let radius = 100;
+        
+        
+        function project(points,cam,fov,dist,x,y,z,now) {
+            let arr = [];
+            for(let i =0; i<points.length; i++) {
+                let p = points[i];
+                let cx = (cam.z - p.z) * Math.sin(Math.PI / 180) + Math.cos(Math.PI / 180) * (cam.x - p.x);
+                let cz = (cam.z - p.z) * Math.cos(Math.PI / 180) - Math.sin(Math.PI / 180) * (cam.x - p.x);
+                
+                cam.x = cx + p.x;
+                cam.z = cz + p.z;
+                
+               arr.push(new point((points[i].x - cam.x)  * (fov / ((points[i].z - cam.z) - dist)) + w * 0.5, (points[i].y - cam.y) * (fov / ((points[i].z - cam.z) - dist)) + h * 0.5,0,points[i].rgb));
+            }
+            
+            return arr;
+        }
+        
+       function draw(i,points) {
+        ctx.strokeStyle = i % 2 == 0 ? "blue" : "yellow";
+        ctx.beginPath();
+        ctx.moveTo(points[i].x,points[i].y);
+        ctx.lineTo(points[i].x+1, points[i].y+1);
+        ctx.stroke();
+        
+    }
+    //    for(let j=0; j<angles.length; j+=30) {
+        //         for(let i =-360; i<360; i+=1) {
+            //              let angle = Math.PI / 180 * i;
+            //              let cos = (Math.cos(angle) * angles[j].z + angles[j].x);
+            //              let sin = (Math.sin(angle) * angles[j].z + angles[j].y);
+            
+            //             let cos1 = p1.x + (Math.cos(angle) * angles[j].z + (angles[j].x)) / 4;
+            //             let sin1 = p1.z + (Math.sin(angle) * angles[j].z + (angles[j].y)) / 4;
+            //             points.push(new point(cos1,p1.y + i,sin1,angles[j].rgb));
+            //         }
+            //     }
+            
+            
+            var buildings = [];
+            let points = [];
+            let x1 = 20, y1 = 200, z1 = 10;
+            for(let i =0; i<2; i++) {
+            for(let x = 0; x<x1; x+=1) {
+                for(let y =0; y<y1; y+=1) { 
+                    for(let z =0; z<z1; z+=1) {
+                        let dx = p1.x + x;
+                        let dy = p1.y + y;
+                        let dz = p1.z + z;
+                        points.push(new point(dx,dy,dz,`rgb(${Math.random() * 255},${Math.random() * 255},${Math.random() * 255})`));
+                    }
+                }
+                }
+            }
+
+
+        function rotate(points,angle,axis) {
+            switch(axis) {
+                case "y":
+                    for(let i =0; i<points.length; i++) {
+                    let p = points[i];
+                    let dx = (p.z - p1.z) * Math.sin(angle) + (p.x - p1.x) * Math.cos(angle);
+                    let dz = (p.z - p1.z) * Math.cos(angle) - (p.x - p1.x) * Math.sin(angle);
+                    p.x = dx + p1.x; 
+                    p.z = dz + p1.z; 
+                }
+                    break;
+            }
+            if(axis == null) {
+            for(let i =0; i<points.length; i++) {
+                let p = points[i];
+                let dx = (p.x - p1.x) * Math.cos(angle) - (p.y - p1.y) * Math.sin(angle);
+                let dy = (p.x - p1.x) * Math.sin(angle) + (p.y - p1.y) * Math.cos(angle);
+                p.x = dx + p1.x; 
+                p.y = dy + p1.y; 
+            }
+            for(let i =0; i<points.length; i++) {
+                let p = points[i];
+                let dy = (p.y - p1.y) * Math.cos(angle) - (p.z - p1.z) * Math.sin(angle);
+                let dz = (p.y - p1.y) * Math.sin(angle) + (p.z - p1.z) * Math.cos(angle);
+                p.y = dy + p1.y; 
+                p.z = dz + p1.z; 
+            }
+        }
+        }
+        
+        canvas.addEventListener('mousemove', (e) => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+            mouse.z = mouse.y;
+            
+        })
+        
+         //rotate(points,Math.PI / 180 * 90);
+        function render(now) {
+            now *= 0.1;
+            ctx.clearRect(0,0,w,h);
+            
+            var proj = project(points,camera,200,1000,1,1,1,now);
+
+            for(let i =0; i<proj.length; i++) {
+                    draw(i, proj);
+            }
+            ctx.fillText(`x${mouse.x} y${mouse.y}`, w/2, h/2);
+
+            ctx.fillText(`${points[0].x} y${points[0].y}`,w/2, h/2+30);
+
+            
+            //rotate(points,Math.PI / 180, "y");
+            
+            
+            
+            requestAnimationFrame(render);
+        }
+        
+        requestAnimationFrame(render);
+    </script>
+</body>
+</html>
