@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Circle</title>
+</head>
+<body>
+    <script>
+         var w = window.innerWidth;
+        var h = window.innerHeight;
+        
+        var canvas = document.createElement('canvas');
+        document.body.appendChild(canvas);
+
+        canvas.width = w;
+        canvas.height = h;
+
+        var ctx = canvas.getContext('2d');
+
+        var point = function(x,y,z,rgb) {this.x=x;this.y=y;this.z=z;this.rgb=rgb;};
+        var p1 = new point(w/2, h/2,100,"white");
+
+        var mouse = new point(0,0,0);
+
+        document.addEventListener('mousemove', (e) => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+        })
+
+        var circle = function(x,y,z,r) {this.x=x;this.y=y;this.z=z;this.r=r;};
+
+        
+        var c1 = new circle(w/2, h/2, 0, 10);
+
+        var c2 = new circle(w/2-200, h/2, 0, 10);
+
+        function circleCollision(c1,c1r,c2,c2r) {
+            let deltaX = c1.x - c2.x;
+            let deltaY = c1.y - c2.y;
+            let distance = Math.sqrt((deltaX * deltaX) + (deltaY * deltaY));
+
+            if(distance <= c1r+c2r) {
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+        var speed = 1;
+        var circleCollided = false;
+
+        var circles = [];
+
+        var cosine = [];
+        var sine = [];
+
+        for(let i =0; i<360; i++) {
+            let angle = Math.PI / 180 * i;
+            cosine.push(new point(Math.cos(angle) * 40, Math.sin(angle) * 40,0,`rgb(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255})`));
+        }
+    
+
+        for(let i =0; i<360; i++) {
+            let angle = Math.PI / 180 * i;
+            sine.push(new point(Math.sin(angle) * 100, Math.cos(angle) * 50,0,""));
+        }
+
+        
+        
+    for(let i =0; i<cosine.length; i++) {
+        for(let j =0; j<=360; j++) {
+            let angle = Math.PI / 180 * j;
+            let radius = Math.random() * (50 - 40) + 40;
+            let cos = w/2 + Math.cos(angle) * 20 + cosine[i].x;
+            let sin = h/2 +Math.sin(angle) * 20 + sine[i].y;
+            circles.push(new circle(cos, sin, 0, radius));
+        }
+    }
+
+        var points = [circles];
+        console.log(points);
+        
+        var itr = 0;
+
+        function render(now) {
+            now *= 0.0001;
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+            itr+=1;
+
+
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            //points.push(circles);
+            for(let i =0; i<sine.length; i+=2) {
+            for(let j =0; j<=360; j++) {
+                    
+                    if(itr > 100) {
+                        ctx.strokeStyle = `rgb(${Math.random() * 255},${Math.random() * 255},${Math.random() * 255})`;
+                        document.body.style.backgroundColor =  `rgb(${Math.random() * 255},${Math.random() * 255},${Math.random() * 255})`;
+                        itr = 0;
+                    }
+                   let angle = Math.PI / 180 * j * i;
+                    let cos = w/2 + Math.cos(angle) * itr + sine[i].x;
+                    let sin = h/2 + Math.sin(angle) * itr + sine[i].y;
+                    
+                    let x = w/2;
+                    let y = h/2;
+
+                    let dx = Math.cos(Math.PI / 180 + now) * (cos - x) - Math.sin(Math.PI / 180 + now) * (sin - y);
+                    let dy = Math.sin(Math.PI / 180 + now) * (cos - x) + Math.cos(Math.PI / 180 + now) * (sin - y);
+
+                    cos = dx + x;
+                    sin = dy + y;
+
+                    ctx.moveTo(cos, sin);
+                    ctx.lineTo(cos+1, sin+1);
+            
+        }
+    }
+           
+            // for(let j =0; j<points.length; j++) {
+            //     for(let i=0; i<points[j].length; i++) {
+            //         let p = points[j][i];
+            //         ctx.moveTo(p.x, p.y);
+            //         ctx.lineTo(p.x+1, p.y+1);
+            //     }
+                
+            // }
+            
+            ctx.stroke();
+            
+            // ctx.beginPath();
+            // ctx.arc(c2.x, c2.y, c2.r, 0, Math.PI * 2);
+            // ctx.stroke();
+            
+            //c1.x += circleCollided ? now : 0;
+
+            if(now > 10) {
+               // c2.y+=now;
+               c2.y -= 0.1;
+            }
+
+            c2.x += speed;
+
+
+            if(circleCollision(c1,c1.r,c2,c2.r)) {
+                //ctx.fillText("Collided", w/2, h/2-100);
+                //c1.x += 1;
+                circleCollided = true;
+                speed = 0;
+            }
+            else {
+            }
+            
+            requestAnimationFrame(render);
+        }
+
+        requestAnimationFrame(render);
+    </script>
+</body>
+</html>
