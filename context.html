@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canvas</title>
+</head>
+<body>
+    <script src="document.js"></script>
+    <script>
+        var canvas = document.getElementById('canvas');
+
+        canvas.style.backgroundColor = `rgb(0,0,0)`;
+
+        var ctx = canvas.getContext('2d');
+
+        var p = new point(w/2, h/2, 100);
+        var mouse = new mice(w/2, h/2, 100, false);
+        var cam = new camera(w/2, h/2, 100, 200, 1000);
+
+        var image = new Image();
+        image.width = 50;
+        image.height = 50;
+        image.src = "1.png";
+
+        var radius = 30;
+
+        var points = [];
+
+        var xAxis = 180;
+        var yAxis = 180;
+
+        class Layout {
+            constructor(x,y,z,sizeX, sizeY, sizeZ, styleId) {
+                this.x=x;
+                this.y=y;
+                this.z=z;
+
+                this.sizeX = sizeX;
+                this.sizeY = sizeY;
+                this.sizeZ = sizeZ;
+
+                this.styleId = styleId;
+
+                this.points = [];
+
+                for(let i =0; i<this.sizeX; i++) {
+                    for(let j=0; j<this.sizeY; j++) {
+                        let phi = Math.PI / 2 - this.sizeY * j* i;
+                        let cosPhi = Math.cos(phi);
+                        let sinPhi = Math.sin(phi);
+                        for(let z=0; z<this.sizeZ; z++) {
+                        let theta = Math.PI * 2 / z + j * this.sizeZ;
+                            let cosTheta = Math.cos(theta);
+                            let sinTheta = Math.sin(theta);
+                            this.points.push(new point(this.x + cosPhi * cosTheta * i, this.y + sinPhi * j + z, this.z + sinPhi * cosTheta * z, this.styleId > 1 ? `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${i})` : `rgba(${Math.random() * 255}, ${i}, ${Math.random() * 255})`));
+                        }
+                    }
+                }
+                
+            }
+
+            project(points, cam, fov, dist) {
+
+                let x1 = points.x - cam.x;
+                let y1 = points.y - cam.y;
+                let z1 = points.z - cam.z;
+
+                // let angle = Math.PI / 180 + (mouse.x/20);
+
+                // let dx = Math.sin(angle) * z1 + Math.cos(angle) * x1;
+                // let dz = Math.cos(angle) * z1 - Math.sin(angle) * x1;
+
+                // let dy1 = Math.cos(angle) * y1 - Math.sin(angle) * z1;
+                // let dz1 = Math.sin(angle) * y1 + Math.cos(angle) * z1;
+
+                return new point(x1 * (fov / (z1 - dist)) + w * 0.5, y1 * (fov / (z1 - dist)) + h * 0.5, 0, points.rgb);
+            }
+
+            drawX(p) {
+                ctx.strokeStyle = p.rgb;
+                ctx.beginPath();
+                ctx.moveTo(p.x, p.y);
+                ctx.lineTo(p.x + 1, p.y + 1);
+                ctx.stroke();
+            }
+
+            draw() {
+                for(let i =0; i<this.points.length; i++) {
+                    let p = this.project(this.points[i], cam, cam.fov, cam.dist);
+                    this.drawX(p);
+                }
+            }
+        }
+
+        function rotate(points,x,y,z, axis,angle) {
+            
+            switch(axis) {
+                case "x":
+                    for(let i =0; i<points.length; i++) {
+                        let p = points[i];
+
+                        let dx = Math.cos(angle) * (p.x - x) - Math.sin(angle) * (p.y - y);
+                        let dy = Math.sin(angle) * (p.x - x) + Math.cos(angle) * (p.y - y);
+
+                        p.x = dx + x;
+                        p.y = dy + y;
+                    }
+                    break;
+                case "y":
+                    for(let i =0; i<points.length; i++) {
+                        let p = points[i];
+
+                        let dx = Math.sin(angle) * (p.z - z) + Math.cos(angle) * (p.x - x);
+                        let dz = Math.cos(angle) * (p.z - z) - Math.sin(angle) * (p.x - x);
+
+                        p.x = dx + x;
+                        p.z = dz + z;
+                    }
+                break;
+            }
+            }
+
+
+        let objs = [];
+
+        for(let i =0; i<1; i++) {
+            objs.push(new Layout(Math.random() * w, h/2, cam.fov,Math.random() * (30 - 20) + 20, Math.random() * (30 - 20) + 20, Math.random() * (30 - 20) + 20, 1));
+        }
+
+        setInterval(() => {
+            objs.push(new Layout(Math.random() * w, h/2, cam.fov + Math.random() * 100,Math.random() * (30 - 20) + 20, Math.random() * (30 - 20) + 20, Math.random() * (30 - 20) + 20, Math.random() * 2));
+            //objs.pop();
+        }, 2000);
+
+        function render(now) {
+
+            now *= 0.001;
+            now = Math.floor(now);
+            
+            ctx.clearRect(0,0,w,h);
+            
+            for(let obj of objs) {
+                obj.draw();
+            }
+
+            cam.fov += 2;
+
+            ctx.fillText(now, w/2, h/2);
+
+            // rotate(points, w/2, h/2, 100, "x",Math.PI / 180);
+            // rotate(points, w/2, h/2, 100, "y",Math.PI / 180);
+
+            requestAnimationFrame(render);
+        }
+        requestAnimationFrame(render);
+    </script>
+</body>
+</html>
